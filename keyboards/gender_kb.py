@@ -8,11 +8,11 @@ def create_gender_keyboard() -> InlineKeyboardMarkup:
     kb_builder.row(
         InlineKeyboardButton(
             text=LEXICON['male_button'],
-            callback_data='male_button'
+            callback_data='male'
         ),
         InlineKeyboardButton(
             text=LEXICON['female_button'],
-            callback_data='female_button'
+            callback_data='female'
         ),
         width=1,
     )
