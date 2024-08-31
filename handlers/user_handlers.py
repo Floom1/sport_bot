@@ -8,9 +8,10 @@ import os
 
 from database.db import FSMFillForm, user_dict
 from lexicon.lexicon_ru import LEXICON
-from services.percent import fat_percentage
+from services.percent import fat_percentage, join
 from keyboards.menu_kb import create_menu_keyboard
 from keyboards.gender_kb import create_gender_keyboard
+from keyboards.training_kb import create_base_training_kb, create_workout_select_kb
 from filters.filters import IsNormalBelly, IsNormalHigh, IsNormalWeight
 
 router = Router()
@@ -18,6 +19,8 @@ all_media_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media'
 
 
 
+# --------------------------------
+# Раздел команд
 @router.message(CommandStart(), StateFilter(default_state))
 async def process_start_command(message: Message):
     await message.answer(
@@ -39,6 +42,25 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
     await state.clear()
 
 
+@router.message(Command(commands='showpercent'))
+async def process_showpercent_comman(message: Message):
+    if message.from_user.id in user_dict:
+        fat = fat_percentage(user_dict[message.from_user.id]['gender'],
+                             user_dict[message.from_user.id]['weight'],
+                               user_dict[message.from_user.id]['belly_girth'], user_dict[message.from_user.id]['high'])
+        photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
+        await message.answer_photo(photo=photo)
+        await message.answer(
+            text=("".join([LEXICON['result'], fat + "%"]))
+        )
+    else:
+        await message.answer(
+            text=LEXICON['no_data']
+        )
+
+
+# ----------------------------
+# Раздел %ЖМТ
 # РАЗДЕЛИТЬ НА 2 ФУНКЦИИ и КЛАВИАТУРЫ!!!!!!!!!!!
 @router.callback_query(F.data == 'fat_percentage_button')
 async def process_fat_percentage_test_command(callback: CallbackQuery,
@@ -106,23 +128,35 @@ async def process_weight_enter(message: Message,
     photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
     await message.answer_photo(photo=photo)
     await message.answer(
-        text=("".join(LEXICON['result'] + fat + "%"))
+        text=(join(LEXICON['result'], fat, "%"))
     )
     await state.clear()
 
 
-@router.message(Command(commands='showpercent'))
-async def process_showpercent_comman(message: Message):
-    if message.from_user.id in user_dict:
-        fat = fat_percentage(user_dict[message.from_user.id]['gender'],
-                             user_dict[message.from_user.id]['weight'],
-                               user_dict[message.from_user.id]['belly_girth'], user_dict[message.from_user.id]['high'])
-        photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
-        await message.answer_photo(photo=photo)
-        await message.answer(
-            text=("".join([LEXICON['result'], fat + "%"]))
-        )
-    else:
-        await message.answer(
-            text=LEXICON['no_data']
-        )
+@router.message(StateFilter(FSMFillForm.fill_weight),
+                ~IsNormalWeight())
+async def process_wrong_weight_enter(message: Message):
+    await message.answer(
+        text=LEXICON['wrong_weight']
+    )
+
+
+@router.message(~StateFilter(default_state))
+async def process_wrong_message(message: Message):
+    await message.answer(
+        text=LEXICON['wrong_message']
+    )
+
+
+#  --------------------------------
+# Раздел тренировок
+@router.callback_query(F.data == 'training_button')
+async def process_create_training_keyboard(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['workout_select_keyboard'],
+                         reply_markup=create_workout_select_kb())
+
+
+@router.callback_query(F.data.in_(['male', 'female']))
+async def process_create_base_workuot_kb(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON[join(str(callback.data), '_base_workout_keyboard')],
+                         reply_markup=create_base_training_kb(callback))

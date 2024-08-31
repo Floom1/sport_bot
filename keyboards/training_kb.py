@@ -1,0 +1,63 @@
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import CallbackQuery
+
+
+from lexicon.lexicon_ru import LEXICON
+from services.percent import join
+
+
+def create_workout_select_kb() -> InlineKeyboardMarkup:
+    kb_builder = InlineKeyboardBuilder()
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=LEXICON['base_male_training_button'],
+            callback_data='male'
+        ),
+        InlineKeyboardButton(
+            text=LEXICON['base_female_training_button'],
+            callback_data='female'
+        ),
+        InlineKeyboardButton(
+            text=LEXICON['beginner_training_button'],
+            callback_data='beginner_training'
+        ),
+        width=2,
+    )
+    return kb_builder.as_markup()
+
+
+def create_base_training_kb(callback: CallbackQuery) -> InlineKeyboardMarkup:
+    kb_builder = InlineKeyboardBuilder()
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=LEXICON[join(str(callback.data), '_day_1_base_training_button')],
+            callback_data='_day_1_base_training'
+        ),
+        InlineKeyboardButton(
+            text=LEXICON[join(str(callback.data), '_day_2_base_training_button')],
+            callback_data='_day_2_base_training'
+        ),
+        InlineKeyboardButton(
+            text=LEXICON[join(str(callback.data), '_day_3_base_training_button')],
+            callback_data='_day_3_base_training'
+        ),
+        width=1,
+    )
+    return kb_builder.as_markup()
+
+
+def create_beginner_training_kb() -> InlineKeyboardMarkup:
+    kb_builder = InlineKeyboardBuilder()
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=LEXICON['day_1_base_beginner_button'],
+            callback_data='day_1_base_beginner'
+        ),
+        InlineKeyboardButton(
+            text=LEXICON['day_2_base_beginner_button'],
+            callback_data='day_2_base_beginner'
+        ),
+        width=1
+    )
+    return kb_builder.as_markup()

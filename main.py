@@ -21,7 +21,6 @@ async def main():
     )
 
     logger.info("Starting bot...")
-
     config: Config = load_config()
 
     bot = Bot(
