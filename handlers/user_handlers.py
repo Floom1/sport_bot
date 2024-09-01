@@ -11,7 +11,7 @@ from lexicon.lexicon_ru import LEXICON
 from services.percent import fat_percentage, join
 from keyboards.menu_kb import create_menu_keyboard
 from keyboards.gender_kb import create_gender_keyboard
-from keyboards.training_kb import create_base_training_kb, create_workout_select_kb
+from keyboards.training_kb import create_base_training_kb, create_workout_select_kb, create_back_to_workot_select_kb
 from filters.filters import IsNormalBelly, IsNormalHigh, IsNormalWeight
 
 router = Router()
@@ -150,13 +150,25 @@ async def process_wrong_message(message: Message):
 
 #  --------------------------------
 # Раздел тренировок
-@router.callback_query(F.data == 'training_button')
+@router.callback_query(F.data.in_(['training_button', 'back_to_workout_select']))
 async def process_create_training_keyboard(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON['workout_select_keyboard'],
                          reply_markup=create_workout_select_kb())
 
 
 @router.callback_query(F.data.in_(['male', 'female']))
-async def process_create_base_workuot_kb(callback: CallbackQuery):
+async def process_create_base_workout_kb(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON[join(str(callback.data), '_base_workout_keyboard')],
                          reply_markup=create_base_training_kb(callback))
+
+
+@router.callback_query(F.data.in_(['male_day_1_base_training', 'male_day_2_base_training', 'male__day_3_base_training', 'female_day_1_base_training', 'female_day_2_base_training', 'female_day_3_base_training']))
+async def process_send_base_workout(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON[callback.data],
+                                     reply_markup=create_back_to_workot_select_kb())
+
+
+@router.callback_query(F.data == 'back_to_menu')
+async def process_back_to_menu_kb(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['start_fat_test'],
+                         reply_markup=create_menu_keyboard())
