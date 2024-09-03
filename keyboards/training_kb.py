@@ -58,19 +58,19 @@ def create_beginner_training_kb() -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     kb_builder.row(
         InlineKeyboardButton(
-            text=LEXICON['day_1_base_beginner_button'],
-            callback_data='day_1_base_beginner'
+            text=LEXICON['day_1_beginner_training_button'],
+            callback_data='day_1_beginner_training'
         ),
         InlineKeyboardButton(
-            text=LEXICON['day_2_base_beginner_button'],
-            callback_data='day_2_base_beginner'
+            text=LEXICON['day_2_beginner_training_button'],
+            callback_data='day_2_beginner_training'
         ),
-        width=1
+        width=2
     )
     return kb_builder.as_markup()
 
 
-def create_back_to_workot_select_kb() -> InlineKeyboardMarkup:
+def create_back_to_workout_select_kb() -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     kb_builder.row(
         InlineKeyboardButton(

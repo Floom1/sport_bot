@@ -11,7 +11,7 @@ from lexicon.lexicon_ru import LEXICON
 from services.percent import fat_percentage, join
 from keyboards.menu_kb import create_menu_keyboard
 from keyboards.gender_kb import create_gender_keyboard
-from keyboards.training_kb import create_base_training_kb, create_workout_select_kb, create_back_to_workot_select_kb
+from keyboards.training_kb import create_base_training_kb, create_workout_select_kb, create_back_to_workout_select_kb, create_beginner_training_kb
 from filters.filters import IsNormalBelly, IsNormalHigh, IsNormalWeight
 
 router = Router()
@@ -46,8 +46,8 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
 async def process_showpercent_comman(message: Message):
     if message.from_user.id in user_dict:
         fat = fat_percentage(user_dict[message.from_user.id]['gender'],
-                             user_dict[message.from_user.id]['weight'],
-                               user_dict[message.from_user.id]['belly_girth'], user_dict[message.from_user.id]['high'])
+                             user_dict[message.from_user.id]['belly_girth'],
+                               user_dict[message.from_user.id]['high'], user_dict[message.from_user.id]['weight'])
         photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
         await message.answer_photo(photo=photo)
         await message.answer(
@@ -123,12 +123,13 @@ async def process_weight_enter(message: Message,
     await state.update_data(weight=int(message.text))
     user_dict[message.from_user.id] = await state.get_data()
     fat = fat_percentage(user_dict[message.from_user.id]['gender'],
-                             user_dict[message.from_user.id]['weight'],
-                               user_dict[message.from_user.id]['belly_girth'], user_dict[message.from_user.id]['high'])
+                             user_dict[message.from_user.id]['belly_girth'],
+                               user_dict[message.from_user.id]['high'], user_dict[message.from_user.id]['weight'])
     photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
     await message.answer_photo(photo=photo)
     await message.answer(
-        text=(join(LEXICON['result'], fat, "%"))
+        text=(join(LEXICON['result'], fat, "%")),
+        reply_markup=create_menu_keyboard()
     )
     await state.clear()
 
@@ -165,8 +166,19 @@ async def process_create_base_workout_kb(callback: CallbackQuery):
 @router.callback_query(F.data.in_(['male_day_1_base_training', 'male_day_2_base_training', 'male__day_3_base_training', 'female_day_1_base_training', 'female_day_2_base_training', 'female_day_3_base_training']))
 async def process_send_base_workout(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON[callback.data],
-                                     reply_markup=create_back_to_workot_select_kb())
+                                     reply_markup=create_back_to_workout_select_kb())
 
+
+@router.callback_query(F.data == 'beginner_training')
+async def process_create_beginner_workout_kb(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['beginner_training_keyboard'],
+                         reply_markup=create_beginner_training_kb())
+
+
+@router.callback_query(F.data.in_(['day_1_beginner_training', 'day_2_beginner_training']))
+async def process_send_beginner_workou(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON[callback.data],
+                                     reply_markup=create_back_to_workout_select_kb())
 
 @router.callback_query(F.data == 'back_to_menu')
 async def process_back_to_menu_kb(callback: CallbackQuery):
