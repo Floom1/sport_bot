@@ -11,5 +11,5 @@ user_dict: dict[int, dict[str, int, int, int]] = {}
 class FSMFillForm(StatesGroup):
     fill_gender = State()
     fill_belly_girth = State()
-    fill_high = State()
+    # fill_high = State()
     fill_weight = State()

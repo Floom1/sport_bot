@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import Message, FSInputFile, CallbackQuery
 from aiogram.filters import Command, CommandStart, StateFilter
-from aiogram.fsm.state import default_state, State, StatesGroup
+from aiogram.fsm.state import default_state
 from aiogram.fsm.context import FSMContext
 
 import os
@@ -11,12 +11,18 @@ from lexicon.lexicon_ru import LEXICON
 from services.percent import fat_percentage, join
 from keyboards.menu_kb import create_menu_keyboard
 from keyboards.gender_kb import create_gender_keyboard
-from keyboards.training_kb import create_base_training_kb, create_workout_select_kb, create_back_to_workout_select_kb, create_beginner_training_kb
-from filters.filters import IsNormalBelly, IsNormalHigh, IsNormalWeight
+from keyboards.training_kb import (create_base_training_kb,
+                                   create_workout_select_kb,
+                                   create_back_to_workout_select_kb,
+                                   create_beginner_training_kb)
+from keyboards.sport_food_kb import (create_sport_food_select_kb,
+                                     create_weight_gain_kb,
+                                     create_weight_loss_kb,
+                                     create_back_to_sport_food_select_kb)
+from filters.filters import IsNormalBelly, IsNormalWeight
 
 router = Router()
 all_media_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media')
-
 
 
 # --------------------------------
@@ -47,8 +53,9 @@ async def process_showpercent_comman(message: Message):
     if message.from_user.id in user_dict:
         fat = fat_percentage(user_dict[message.from_user.id]['gender'],
                              user_dict[message.from_user.id]['belly_girth'],
-                               user_dict[message.from_user.id]['high'], user_dict[message.from_user.id]['weight'])
-        photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
+                            #  user_dict[message.from_user.id]['high'],
+                             user_dict[message.from_user.id]['weight'])
+        photo = FSInputFile(path=os.path.join('media', 'results.jpg'))
         await message.answer_photo(photo=photo)
         await message.answer(
             text=("".join([LEXICON['result'], fat + "%"]))
@@ -86,9 +93,11 @@ async def process_gender_press(callback: CallbackQuery, state: FSMContext):
 async def process_belly_enter(message: Message, state: FSMContext):
     await state.update_data(belly_girth=int(message.text))
     await message.answer(
-        text=LEXICON['fill_high']
+        text=LEXICON['fill_weight']
     )
-    await state.set_state(FSMFillForm.fill_high)
+    await state.set_state(FSMFillForm.fill_weight)
+
+    # await state.set_state(FSMFillForm.fill_high)
 
 
 @router.message(StateFilter(FSMFillForm.fill_belly_girth))
@@ -98,22 +107,23 @@ async def process_wrong_belly_enter(message: Message):
     )
 
 
-@router.message(StateFilter(FSMFillForm.fill_high),
-                       IsNormalHigh())
-async def process_high_enter(message: Message, state: FSMContext):
-    await state.update_data(high=int(message.text))
-    await message.answer(
-        text=LEXICON['fill_weight']
-    )
-    await state.set_state(FSMFillForm.fill_weight)
+# Данные хэндлеры использовались ранее для другой формулы вычисления %ЖМТ!
+# @router.message(StateFilter(FSMFillForm.fill_high),
+#                        IsNormalHigh())
+# async def process_high_enter(message: Message, state: FSMContext):
+#     await state.update_data(high=int(message.text))
+#     await message.answer(
+#         text=LEXICON['fill_weight']
+#     )
+#     await state.set_state(FSMFillForm.fill_weight)
 
 
-@router.message(StateFilter(FSMFillForm.fill_high),
-                       ~IsNormalHigh())
-async def process_wrong_high_enter(message: Message):
-    await message.answer(
-        text=LEXICON['wrong_high']
-    )
+# @router.message(StateFilter(FSMFillForm.fill_high),
+#                        ~IsNormalHigh())
+# async def process_wrong_high_enter(message: Message):
+#     await message.answer(
+#         text=LEXICON['wrong_high']
+#     )
 
 
 @router.message(StateFilter(FSMFillForm.fill_weight),
@@ -123,9 +133,10 @@ async def process_weight_enter(message: Message,
     await state.update_data(weight=int(message.text))
     user_dict[message.from_user.id] = await state.get_data()
     fat = fat_percentage(user_dict[message.from_user.id]['gender'],
-                             user_dict[message.from_user.id]['belly_girth'],
-                               user_dict[message.from_user.id]['high'], user_dict[message.from_user.id]['weight'])
-    photo = FSInputFile(path=os.path.join('media', 'goyda.jpg'))
+                         user_dict[message.from_user.id]['belly_girth'],
+                        #  user_dict[message.from_user.id]['high'],
+                         user_dict[message.from_user.id]['weight'])
+    photo = FSInputFile(path=os.path.join('media', 'results.jpg'))
     await message.answer_photo(photo=photo)
     await message.answer(
         text=(join(LEXICON['result'], fat, "%")),
@@ -163,7 +174,8 @@ async def process_create_base_workout_kb(callback: CallbackQuery):
                          reply_markup=create_base_training_kb(callback))
 
 
-@router.callback_query(F.data.in_(['male_day_1_base_training', 'male_day_2_base_training', 'male__day_3_base_training', 'female_day_1_base_training', 'female_day_2_base_training', 'female_day_3_base_training']))
+@router.callback_query(F.data.in_(['male_day_1_base_training', 'male_day_2_base_training', 'male__day_3_base_training',
+                                   'female_day_1_base_training', 'female_day_2_base_training', 'female_day_3_base_training']))
 async def process_send_base_workout(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON[callback.data],
                                      reply_markup=create_back_to_workout_select_kb())
@@ -180,7 +192,35 @@ async def process_send_beginner_workou(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON[callback.data],
                                      reply_markup=create_back_to_workout_select_kb())
 
+
 @router.callback_query(F.data == 'back_to_menu')
 async def process_back_to_menu_kb(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON['start_fat_test'],
                          reply_markup=create_menu_keyboard())
+
+
+# ---------------------------------------
+# Раздел спортивного питания
+@router.callback_query(F.data.in_(['sports_food_button', 'back_to_sport_food_select']))
+async def process_create_sport_food_keyboard(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['sport_food_select_keyboard'],
+                         reply_markup=create_sport_food_select_kb())
+
+
+@router.callback_query(F.data == 'weight_gain')
+async def process_create_weight_gain_kb(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['weight_gain_keyboard'],
+                         reply_markup=create_weight_gain_kb(callback))
+
+
+@router.callback_query(F.data == 'weight_loss')
+async def process_create_weight_loss_kb(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON['weight_loss_keyboard'],
+                         reply_markup=create_weight_loss_kb(callback))
+
+
+@router.callback_query(F.data.in_(['weight_gain_day_1_sport_pit', 'weight_gain_day_2_sport_pit', 'weight_gain_day_3_sport_pit',
+                                   'weight_loss_day_1_sport_pit', 'weight_loss_day_2_sport_pit', 'weight_loss_day_3_sport_pit']))
+async def process_send_base_workout(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON[callback.data],
+                                     reply_markup=create_back_to_sport_food_select_kb())

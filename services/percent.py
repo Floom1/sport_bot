@@ -1,8 +1,8 @@
-def fat_percentage(gender, belly_girth, high, weight):
+def fat_percentage(gender, belly_girth, weight):
     if gender == 'male':
-        fat = 0.31457 * belly_girth - 0.10969 * weight + 10.834
+        fat = belly_girth * 0.74 - weight * 0.082 - 34.89
     else:
-        fat = 0.11077 * belly_girth - 0.17666 * (high / 100) + 0.14354 * weight
+        fat = belly_girth * 0.74 - weight * 0.082 - 44.74
 
     return str(round(fat, 2))
 
